@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Заметки</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      scroll-behavior: smooth;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #f1f5f9;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .scrolled {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    
+    .note-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .note-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.3);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+    }
+    
+    .btn-primary:active {
+      transform: translateY(1px);
+    }
+    
+    .btn-reminder {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    
+    .btn-reminder:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+    }
+    
+    .note-form {
+      background: rgba(30, 41, 59, 0.7);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+    
+    .form-input {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 12px;
+      border: 2px dashed rgba(14, 165, 233, 0.3);
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(30, 41, 59, 0.95);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      border-left: 4px solid #0ea5e9;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      transform: translateX(120%);
+      transition: transform 0.4s ease;
+      z-index: 1000;
+      max-width: 350px;
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+    
+    .notification-title {
+      display: flex;
+      align-items: center;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #0ea5e9;
+    }
+    
+    .location-badge {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(138, 43, 226, 0.2);
+      color: #c19bf5;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .note-badge {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(249, 115, 22, 0.2);
+      color: #fdba74;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .timezone-badge {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(14, 165, 233, 0.2);
+      color: #7dd3fc;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 120px;
+      background-color: #1e293b;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 0;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -60px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.8rem;
+      border: 1px solid #0ea5e9;
+    }
+    
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+    
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+      background: rgba(14, 165, 233, 0.2);
+      color: #0ea5e9;
+      transform: translateY(-2px);
+    }
+    
+    .reminder-box {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .export-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+    
+    .notes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .notes-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .py-10 {
+      padding-top: 2.5rem;
+      padding-bottom: 2.5rem;
+    }
+    
+    .px-4 {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    .max-w-4xl {
+      max-width: 56rem;
+    }
+    
+    .mx-auto {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .text-2xl {
+      font-size: 1.5rem;
+    }
+    
+    .font-bold {
+      font-weight: bold;
+    }
+    
+    .mb-6 {
+      margin-bottom: 1.5rem;
+    }
+    
+    .text-white {
+      color: white;
+    }
+    
+    .flex {
+      display: flex;
+    }
+    
+    .items-center {
+      align-items: center;
+    }
+    
+    .mr-3 {
+      margin-right: 0.75rem;
+    }
+    
+    .mr-2 {
+      margin-right: 0.5rem;
+    }
+    
+    .block {
+      display: block;
+    }
+    
+    .text-gray-300 {
+      color: #d1d5db;
+    }
+    
+    .mb-2 {
+      margin-bottom: 0.5rem;
+    }
+    
+    .w-full {
+      width: 100%;
+    }
+    
+    .grid {
+      display: grid;
+    }
+    
+    .grid-cols-1 {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    
+    .gap-6 {
+      gap: 1.5rem;
+    }
+    
+    .gap-3 {
+      gap: 0.75rem;
+    }
+    
+    .px-6 {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+    
+    .py-3 {
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
+    }
+    
+    .rounded-lg {
+      border-radius: 0.5rem;
+    }
+    
+    .font-medium {
+      font-weight: 500;
+    }
+    
+    .flex-wrap {
+      flex-wrap: wrap;
+    }
+    
+    .gap-5 {
+      gap: 1.25rem;
+    }
+    
+    .text-5xl {
+      font-size: 3rem;
+    }
+    
+    .text-primary {
+      color: #0ea5e9;
+    }
+    
+    .mb-4 {
+      margin-bottom: 1rem;
+    }
+    
+    .text-xl {
+      font-size: 1.25rem;
+    }
+    
+    .text-gray-400 {
+      color: #9ca3af;
+    }
+    
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    .text-2xl {
+      font-size: 1.5rem;
+    }
+    
+    .ml-2 {
+      margin-left: 0.5rem;
+    }
+    
+    .bg-primary {
+      background-color: #0ea5e9;
+    }
+    
+    .text-sm {
+      font-size: 0.875rem;
+    }
+    
+    .px-3 {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+    
+    .py-1 {
+      padding-top: 0.25rem;
+      padding-bottom: 0.25rem;
+    }
+    
+    .rounded-full {
+      border-radius: 9999px;
+    }
+    
+    .p-5 {
+      padding: 1.25rem;
+    }
+    
+    .relative {
+      position: relative;
+    }
+    
+    .justify-between {
+      justify-content: space-between;
+    }
+    
+    .items-start {
+      align-items: flex-start;
+    }
+    
+    .flex-1 {
+      flex: 1 1 0%;
+    }
+    
+    .whitespace-pre-line {
+      white-space: pre-line;
+    }
+    
+    .flex-wrap {
+      flex-wrap: wrap;
+    }
+    
+    .mt-2 {
+      margin-top: 0.5rem;
+    }
+    
+    .mt-4 {
+      margin-top: 1rem;
+    }
+    
+    .text-xs {
+      font-size: 0.75rem;
+    }
+    
+    .text-gray-500 {
+      color: #6b7280;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: .5;
+      }
+    }
+    
+    @media (min-width: 768px) {
+      .md\:grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .export-btn {
+        margin-top: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="notification" class="notification">
+    <div class="notification-title">
+      <span>🔔</span> Напоминание!
+    </div>
+    <div id="notificationContent">У вас запланировано событие</div>
+  </div>
+
+  <section class="py-10 px-4 relative">
+    <div class="max-w-4xl mx-auto">
+      <div class="note-form">
+        <h2 class="text-2xl font-bold mb-6 text-white flex items-center">
+          <span>➕</span> Новая заметка
+        </h2>
+        
+        <div class="mb-6">
+          <label class="block text-gray-300 mb-2 flex items-center">
+            <span>📝</span> Текст заметки
+          </label>
+          <textarea 
+            id="noteText" 
+            class="w-full form-input" 
+            rows="3" 
+            placeholder="Введите текст заметки"
+          ></textarea>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label class="block text-gray-300 mb-2 flex items-center">
+              <span>📍</span> Место
+            </label>
+            <input 
+              type="text" 
+              id="noteLocation" 
+              class="w-full form-input" 
+              placeholder="Местоположение"
+            >
+          </div>
+          
+          <div>
+            <label class="block text-gray-300 mb-2 flex items-center">
+              <span>ℹ️</span> Примечание
+            </label>
+            <input 
+              type="text" 
+              id="noteNote" 
+              class="w-full form-input" 
+              placeholder="Дополнительные детали"
+            >
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label class="block text-gray-300 mb-2 flex items-center">
+              <span>📅</span> Дата напоминания
+            </label>
+            <input 
+              type="date" 
+              id="reminderDate" 
+              class="w-full form-input"
+            >
+          </div>
+          
+          <div>
+            <label class="block text-gray-300 mb-2 flex items-center">
+              <span>⏰</span> Время напоминания
+            </label>
+            <input 
+              type="time" 
+              id="reminderTime" 
+              class="w-full form-input"
+            >
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <label class="block text-gray-300 mb-2 flex items-center">
+            <span>🌐</span> Часовой пояс
+          </label>
+          <select id="noteTimezone" class="w-full form-input">
+            <option value="Europe/Moscow">Москва (GMT+3)</option>
+            <option value="Europe/Kaliningrad">Калининград (GMT+2)</option>
+            <option value="Asia/Yekaterinburg">Екатеринбург (GMT+5)</option>
+            <option value="Asia/Omsk">Омск (GMT+6)</option>
+            <option value="Asia/Krasnoyarsk">Красноярск (GMT+7)</option>
+            <option value="Asia/Irkutsk">Иркутск (GMT+8)</option>
+            <option value="Asia/Yakutsk">Якутск (GMT+9)</option>
+            <option value="Asia/Vladivostok">Владивосток (GMT+10)</option>
+            <option value="Asia/Magadan">Магадан (GMT+11)</option>
+            <option value="Asia/Kamchatka">Камчатка (GMT+12)</option>
+          </select>
+        </div>
+        
+        <div class="flex flex-wrap gap-3">
+          <button 
+            id="addNoteBtn" 
+            class="btn-primary px-6 py-3 rounded-lg font-medium text-white flex items-center"
+          >
+            <span>💾</span> Сохранить заметку
+          </button>
+          
+          <button 
+            id="addReminderBtn" 
+            class="btn-reminder px-6 py-3 rounded-lg font-medium text-white flex items-center"
+          >
+            <span>🔔</span> Добавить напоминание
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-10 px-4 relative">
+    <div class="max-w-4xl mx-auto">
+      <div class="notes-header mb-6">
+        <div class="notes-title">
+          <h2 class="text-2xl font-bold text-white flex items-center">
+            <span>📋</span> Мои заметки
+          </h2>
+          <span id="notesCounter" class="ml-2 bg-primary text-white text-sm font-medium px-3 py-1 rounded-full">0</span>
+        </div>
+        
+        <button 
+          id="exportAllBtn" 
+          class="btn-primary export-btn rounded-lg font-medium text-white flex items-center"
+        >
+          <span>📥</span> Экспорт TXT
+        </button>
+      </div>
+      
+      <div id="notesContainer" class="grid grid-cols-1 gap-5">
+        <div id="emptyState" class="empty-state">
+          <div class="text-5xl text-primary mb-4">
+            <span>📝</span>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-gray-300">У вас пока нет заметок</h3>
+          <p class="text-gray-400 mb-4">Создайте свою первую заметку с напоминанием с помощью формы выше</p>
+          <div class="animate-pulse text-primary">
+            <span>⬆️</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const notesContainer = document.getElementById('notesContainer');
+    const notesCounter = document.getElementById('notesCounter');
+    const emptyState = document.getElementById('emptyState');
+    const noteText = document.getElementById('noteText');
+    const noteLocation = document.getElementById('noteLocation');
+    const noteNote = document.getElementById('noteNote');
+    const reminderDate = document.getElementById('reminderDate');
+    const reminderTime = document.getElementById('reminderTime');
+    const noteTimezone = document.getElementById('noteTimezone');
+    const addNoteBtn = document.getElementById('addNoteBtn');
+    const addReminderBtn = document.getElementById('addReminderBtn');
+    const exportAllBtn = document.getElementById('exportAllBtn');
+    const notification = document.getElementById('notification');
+    const notificationContent = document.getElementById('notificationContent');
+    
+    let notes = [];
+    
+    function initDateTime() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      
+      reminderDate.value = `${year}-${month}-${day}`;
+      reminderTime.value = `${hours}:${minutes}`;
+    }
+    
+    function checkNotificationSupport() {
+      return "Notification" in window;
+    }
+    
+    function requestNotificationPermission() {
+      if (checkNotificationSupport()) {
+        Notification.requestPermission();
+      }
+    }
+    
+    function showNotification(title, body) {
+      if (checkNotificationSupport() && Notification.permission === "granted") {
+        new Notification(title, { body });
+      } else {
+        notificationContent.textContent = body;
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 5000);
+      }
+    }
+    
+    function saveNotes() {
+      localStorage.setItem('notes', JSON.stringify(notes));
+      updateNotesCounter();
+    }
+    
+    function loadNotes() {
+      const savedNotes = localStorage.getItem('notes');
+      if (savedNotes) {
+        try {
+          notes = JSON.parse(savedNotes);
+          renderNotes();
+        } catch (e) {
+          console.error("Ошибка загрузки заметок:", e);
+          notes = [];
+        }
+      }
+      updateNotesCounter();
+    }
+    
+    function updateNotesCounter() {
+      notesCounter.textContent = notes.length;
+      emptyState.style.display = notes.length ? 'none' : 'block';
+    }
+    
+    function checkReminders() {
+      const now = new Date();
+      
+      notes.forEach((note, index) => {
+        if (note.reminder && !note.notified) {
+          const reminderTime = new Date(note.reminder);
+          
+          if (reminderTime <= now) {
+            showNotification("Cobalt Заметки", note.text);
+            notes[index].notified = true;
+            saveNotes();
+            renderNotes();
+          }
+        }
+      });
+    }
+    
+    function formatDate(dateString, timezone) {
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleString('ru-RU', {
+          timeZone: timezone,
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (e) {
+        return "Неверная дата";
+      }
+    }
+    
+    function getDayOfWeek(dateString, timezone) {
+      try {
+        const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+        const date = new Date(dateString);
+        const dayIndex = date.getDay();
+        return days[dayIndex];
+      } catch (e) {
+        return "Неизвестный день";
+      }
+    }
+    
+    function animateNote(element) {
+      element.style.opacity = '0';
+      element.style.transform = 'translateY(20px)';
+      
+      setTimeout(() => {
+        element.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        element.style.opacity = '1';
+        element.style.transform = 'translateY(0)';
+      }, 10);
+    }
+    
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showNotification("Cobalt Заметки", "Заметка скопирована в буфер обмена");
+      }).catch(err => {
+        console.error('Ошибка копирования: ', err);
+      });
+    }
+    
+    function exportNotesToTxt() {
+      if (notes.length === 0) {
+        showNotification("Cobalt Заметки", "Нет заметок для экспорта");
+        return;
+      }
+      
+      let txtContent = "=== Cobalt Заметки ===\n";
+      txtContent += `Экспортировано: ${new Date().toLocaleString('ru-RU')}\n`;
+      txtContent += `Всего заметок: ${notes.length}\n\n`;
+      
+      notes.forEach((note, index) => {
+        txtContent += `Заметка #${index + 1}\n`;
+        txtContent += `--------------------------------\n`;
+        txtContent += `Содержимое: ${note.text}\n`;
+        if (note.location) txtContent += `Место: ${note.location}\n`;
+        if (note.note) txtContent += `Примечание: ${note.note}\n`;
+        if (note.reminder) {
+          txtContent += `Напоминание: ${formatDate(note.reminder, note.timezone)}\n`;
+        }
+        const timezoneOption = noteTimezone.querySelector(`option[value="${note.timezone}"]`);
+        const timezoneText = timezoneOption ? timezoneOption.text : note.timezone;
+        txtContent += `Часовой пояс: ${timezoneText}\n`;
+        txtContent += `Создано: ${formatDate(note.timestamp, note.timezone)}\n\n`;
+      });
+      
+      const blob = new Blob([txtContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cobalt_notes_${new Date().toISOString().slice(0,10)}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showNotification("Cobalt Заметки", `Экспортировано ${notes.length} заметок в TXT`);
+    }
+    
+    function renderNotes() {
+      notesContainer.innerHTML = '';
+      
+      if (notes.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+      }
+      
+      emptyState.style.display = 'none';
+      
+      const sortedNotes = [...notes].sort((a, b) => {
+        if (a.reminder && !b.reminder) return -1;
+        if (!a.reminder && b.reminder) return 1;
+        return new Date(b.timestamp) - new Date(a.timestamp);
+      });
+      
+      sortedNotes.forEach((note) => {
+        const noteElement = document.createElement('div');
+        noteElement.className = 'note-card p-5 relative';
+        
+        let reminderHtml = '';
+        if (note.reminder) {
+          reminderHtml = `
+            <div class="reminder-box">
+              <div class="flex items-center" style="color: #f59e0b;">
+                <span>🔔</span>
+                <span class="font-bold">Напоминание:</span>
+              </div>
+              <div class="mt-2">
+                <div style="color: #f59e0b;">${formatDate(note.reminder, note.timezone)}</div>
+                ${note.location ? `
+                  <div class="location-badge mt-2">
+                    <span>📍</span>
+                    <span>${note.location}</span>
+                  </div>
+                ` : ''}
+                ${note.note ? `
+                  <div class="note-badge mt-2">
+                    <span>ℹ️</span>
+                    <span>${note.note}</span>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }
+        
+        let locationHtml = '';
+        if (note.location && !note.reminder) {
+          locationHtml = `
+            <div class="location-badge">
+              <span>📍</span>
+              <span>${note.location}</span>
+            </div>
+          `;
+        }
+        
+        let noteNoteHtml = '';
+        if (note.note && !note.reminder) {
+          noteNoteHtml = `
+            <div class="note-badge">
+              <span>ℹ️</span>
+              <span>${note.note}</span>
+            </div>
+          `;
+        }
+        
+        let timezoneHtml = '';
+        if (note.timezone) {
+          const timezoneOption = noteTimezone.querySelector(`option[value="${note.timezone}"]`);
+          const timezoneName = timezoneOption ? timezoneOption.text : note.timezone;
+          timezoneHtml = `
+            <div class="timezone-badge">
+              <span>⏰</span>
+              <span>${timezoneName}</span>
+            </div>
+          `;
+        }
+        
+        noteElement.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center">
+                <span>📝</span>
+                <p class="whitespace-pre-line flex-1">${note.text}</p>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-2">
+                ${locationHtml}
+                ${noteNoteHtml}
+              </div>
+              ${reminderHtml}
+              ${timezoneHtml}
+            </div>
+          </div>
+          <div class="mt-4 text-xs text-gray-500">
+            ${formatDate(note.timestamp, note.timezone)} (${getDayOfWeek(note.timestamp, note.timezone)})
+          </div>
+          
+          <div class="action-buttons">
+            <button class="action-btn copy-btn tooltip" data-id="${note.id}">
+              <span>📋</span>
+              <span class="tooltiptext">Копировать</span>
+            </button>
+            <button class="action-btn delete-btn tooltip" data-id="${note.id}">
+              <span>🗑️</span>
+              <span class="tooltiptext">Удалить</span>
+            </button>
+          </div>
+        `;
+        
+        notesContainer.appendChild(noteElement);
+        animateNote(noteElement);
+      });
+      
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          deleteNote(id);
+        });
+      });
+      
+      document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          copyNote(id);
+        });
+      });
+    }
+    
+    function addNote(isReminder = false) {
+      const text = noteText.value.trim();
+      
+      if (!text) {
+        showNotification("Заметки", "Пожалуйста, введите текст заметки");
+        return;
+      }
+      
+      let reminder = null;
+      if (isReminder) {
+        const date = reminderDate.value;
+        const time = reminderTime.value;
+        
+        if (!date || !time) {
+          showNotification("Заметки", "Пожалуйста, укажите дату и время напоминания");
+          return;
+        }
+        
+        reminder = new Date(`${date}T${time}`);
+        
+        if (reminder < new Date()) {
+          showNotification("Заметки", "Пожалуйста, укажите время в будущем");
+          return;
+        }
+      }
+      
+      const newNote = {
+        id: Date.now(),
+        text,
+        location: noteLocation.value.trim(),
+        note: noteNote.value.trim(),
+        timezone: noteTimezone.value,
+        reminder: reminder ? reminder.toISOString() : null,
+        notified: false,
+        timestamp: new Date().toISOString()
+      };
+      
+      notes.push(newNote);
+      saveNotes();
+      renderNotes();
+      
+      noteText.value = '';
+      noteLocation.value = '';
+      noteNote.value = '';
+      
+      if (isReminder) {
+        requestNotificationPermission();
+        showNotification("Заметки", "Напоминание установлено!");
+      } else {
+        showNotification("Заметки", "Заметка сохранена!");
+      }
+    }
+    
+    function deleteNote(id) {
+      if (confirm('Вы уверены, что хотите удалить эту заметку?')) {
+        notes = notes.filter(note => note.id != id);
+        saveNotes();
+        renderNotes();
+        showNotification("Заметки", "Заметка удалена");
+      }
+    }
+    
+    function copyNote(id) {
+      const note = notes.find(note => note.id == id);
+      if (!note) return;
+      
+      let textToCopy = note.text;
+      if (note.location) textToCopy += `\nМесто: ${note.location}`;
+      if (note.note) textToCopy += `\nПримечание: ${note.note}`;
+      if (note.reminder) {
+        textToCopy += `\nНапоминание: ${formatDate(note.reminder, note.timezone)}`;
+      }
+      
+      copyToClipboard(textToCopy);
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      initDateTime();
+      loadNotes();
+      
+      addNoteBtn.addEventListener('click', () => addNote(false));
+      addReminderBtn.addEventListener('click', () => addNote(true));
+      exportAllBtn.addEventListener('click', exportNotesToTxt);
+      
+      setInterval(checkReminders, 30000);
+      checkReminders();
+      
+      window.addEventListener('scroll', function() {
+        const header = document.querySelector('header');
+        if (window.scrollY > 10) {
+          header?.classList.add('scrolled');
+        } else {
+          header?.classList.remove('scrolled');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
